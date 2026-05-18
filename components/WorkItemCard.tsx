@@ -133,12 +133,12 @@ export function WorkItemCard({
             <div className="flex items-center gap-4 text-sm text-gray-600">
               {workItem.remainingWork !== null && (
                 <span>
-                  Còn lại: <strong>{workItem.remainingWork.toFixed(1)}h</strong>
+                  Còn lại: <strong>{workItem?.remainingWork?.toFixed(1)||0}h</strong>
                 </span>
               )}
               {workItem.completedWork !== null && (
                 <span>
-                  Đã làm: <strong>{workItem.completedWork.toFixed(1)}h</strong>
+                  Đã làm: <strong>{workItem?.completedWork?.toFixed(1) || 0}h</strong>
                 </span>
               )}
             </div>
