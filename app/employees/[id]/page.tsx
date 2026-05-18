@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronRight,
   AlertTriangle,
+  Settings,
 } from "lucide-react";
 
 interface EmpDetail {
@@ -145,6 +146,11 @@ export default function EmployeeDetailPage() {
                 />
                 Sync
               </Button>
+              <Link href={`/employees/${params.id}/ado`}>
+                <Button variant="secondary" size="sm">
+                  <Settings size={14} /> Azure DevOps
+                </Button>
+              </Link>
             </div>
           </div>
           {oauthOk && (

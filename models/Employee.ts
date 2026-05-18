@@ -11,6 +11,12 @@ export interface IEmployee {
   accessToken?: EncString | null;
   refreshToken?: EncString | null;
   tokenExpiresAt?: Date | null;
+  // Azure DevOps integration
+  adoPat?: EncString | null;
+  adoOrganization?: string | null;
+  adoProject?: string | null;
+  adoEmail?: string | null;
+  adoEnabled?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,10 +44,21 @@ const EmployeeSchema = new Schema<IEmployee>(
     accessToken: { type: EncStringSchema, default: null },
     refreshToken: { type: EncStringSchema, default: null },
     tokenExpiresAt: { type: Date, default: null },
+    // Azure DevOps integration
+    adoPat: { type: EncStringSchema, default: null },
+    adoOrganization: { type: String, default: null, trim: true },
+    adoProject: { type: String, default: null, trim: true },
+    adoEmail: { type: String, default: null, trim: true },
+    adoEnabled: { type: Boolean, default: false },
   },
   { timestamps: true },
 );
 
+// In development, always recreate the model to pick up schema changes
+if (process.env.NODE_ENV === "development") {
+  delete (mongoose.models as any).Employee;
+  delete (mongoose.connection.models as any).Employee;
+}
+
 export const Employee: Model<IEmployee> =
-  (models.Employee as Model<IEmployee>) ||
   mongoose.model<IEmployee>("Employee", EmployeeSchema);
