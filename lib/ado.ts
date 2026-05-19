@@ -179,9 +179,18 @@ export class AdoClient {
   /**
    * Get work items assigned to user via WIQL.
    */
-  async getAssignedWorkItems(assigneeEmail: string): Promise<number[]> {
+  async getAssignedWorkItems(
+    assigneeEmail: string,
+    workItemTypes?: string[],
+  ): Promise<number[]> {
     const projectClause = this.auth.project
       ? `AND [System.TeamProject] = '${this.auth.project}'`
+      : "";
+
+    const typesClause = workItemTypes?.length
+      ? `AND [System.WorkItemType] IN (${workItemTypes
+          .map((t) => `'${t.replace(/'/g, "''")}'`)
+          .join(", ")})`
       : "";
 
     const wiql = {
@@ -190,6 +199,7 @@ export class AdoClient {
         FROM WorkItems
         WHERE [System.AssignedTo] = '${assigneeEmail}'
           ${projectClause}
+          ${typesClause}
           AND [System.State] <> 'Closed'
           AND [System.State] <> 'Removed'
           AND [System.State] <> 'Done'

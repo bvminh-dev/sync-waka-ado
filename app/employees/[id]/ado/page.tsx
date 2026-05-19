@@ -38,6 +38,7 @@ interface AdoConfig {
   project: string | null;
   email: string | null;
   enabled: boolean;
+  workItemTypes?: string[];
 }
 
 export default function AdoWorkItemsPage({
@@ -280,13 +281,13 @@ export default function AdoWorkItemsPage({
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
         <Select value={stateFilter} onValueChange={setStateFilter}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="h-8 w-auto min-w-[120px] sm:min-w-[140px]">
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tất cả trạng thái</SelectItem>
+            <SelectItem value="all">Tất cả</SelectItem>
             {states.map((s) => (
               <SelectItem key={s} value={s}>
                 {s}
@@ -296,11 +297,11 @@ export default function AdoWorkItemsPage({
         </Select>
 
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Loại ticket" />
+          <SelectTrigger className="h-8 w-auto min-w-[120px] sm:min-w-[140px]">
+            <SelectValue placeholder="Loại" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tất cả loại</SelectItem>
+            <SelectItem value="all">Tất cả</SelectItem>
             {types.map((t) => (
               <SelectItem key={t} value={t}>
                 {t}
@@ -312,14 +313,15 @@ export default function AdoWorkItemsPage({
         <Button
           variant="secondary"
           size="sm"
+          className="h-8"
           onClick={handleRefresh}
           disabled={refreshing}
         >
           <RefreshCw
             size={14}
             className={refreshing ? "animate-spin" : ""}
-          />{" "}
-          Làm mới
+          />
+          <span className="hidden sm:inline">Làm mới</span>
         </Button>
       </div>
 

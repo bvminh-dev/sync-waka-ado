@@ -79,7 +79,10 @@ export async function GET(
     const userEmail = employee.adoEmail;
 
     // Get assigned work item IDs
-    const workItemIds = await client.getAssignedWorkItems(userEmail);
+    const workItemIds = await client.getAssignedWorkItems(
+      userEmail,
+      employee.adoWorkItemTypes,
+    );
 
     if (workItemIds.length === 0) {
       return NextResponse.json({ workItems: [], cachedAt: new Date() });

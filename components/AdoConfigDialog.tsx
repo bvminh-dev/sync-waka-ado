@@ -10,7 +10,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Unplug } from "lucide-react";
+import { Plus, Unplug, X } from "lucide-react";
+
+const COMMON_WORK_ITEM_TYPES = [
+  "User Story",
+  "Task",
+  "Feature",
+  "Bug",
+  "Tech Debt",
+  "Epic",
+];
 
 interface AdoConfigDialogProps {
   employeeId: string;
@@ -19,6 +28,7 @@ interface AdoConfigDialogProps {
     project?: string | null;
     email?: string | null;
     enabled: boolean;
+    workItemTypes?: string[];
   };
   onConfigured?: () => void | Promise<void>;
 }
@@ -33,8 +43,33 @@ export function AdoConfigDialog({
   const [organization, setOrganization] = useState(currentConfig?.organization || "");
   const [project, setProject] = useState(currentConfig?.project || "");
   const [email, setEmail] = useState(currentConfig?.email || "");
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(
+    currentConfig?.workItemTypes || [],
+  );
+  const [customType, setCustomType] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  function toggleType(t: string) {
+    setSelectedTypes((prev) =>
+      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t],
+    );
+  }
+
+  function addCustomType() {
+    const v = customType.trim();
+    if (!v) return;
+    setSelectedTypes((prev) => (prev.includes(v) ? prev : [...prev, v]));
+    setCustomType("");
+  }
+
+  function removeType(t: string) {
+    setSelectedTypes((prev) => prev.filter((x) => x !== t));
+  }
+
+  const customTypes = selectedTypes.filter(
+    (t) => !COMMON_WORK_ITEM_TYPES.includes(t),
+  );
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,7 +77,13 @@ export function AdoConfigDialog({
     setErr(null);
 
     try {
-      const payload = { pat, organization, project, email };
+      const payload: Record<string, unknown> = {
+        organization,
+        project,
+        email,
+        workItemTypes: selectedTypes,
+      };
+      if (pat.trim()) payload.pat = pat;
       const method = currentConfig?.enabled ? "PATCH" : "POST";
 
       const res = await fetch(`/api/employees/${employeeId}/ado`, {
@@ -129,13 +170,81 @@ export function AdoConfigDialog({
               id="pat"
               value={pat}
               onChange={(e) => setPat(e.target.value)}
-              required
+              required={!currentConfig?.enabled}
               type="password"
-              placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              placeholder={
+                currentConfig?.enabled
+                  ? "Để trống = giữ PAT hiện tại"
+                  : "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+              }
             />
             <p className="text-xs text-ink-500 mt-2">
               PAT cần có quyền{" "}
               <span className="font-mono">Work Items (Read &amp; Write)</span>
+              {currentConfig?.enabled && (
+                <span> &middot; Để trống nếu không muốn thay đổi.</span>
+              )}
+            </p>
+          </div>
+          <div>
+            <Label>Loại work item</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {COMMON_WORK_ITEM_TYPES.map((t) => {
+                const checked = selectedTypes.includes(t);
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => toggleType(t)}
+                    className={`px-3 py-1 text-sm rounded-full border transition-colors ${
+                      checked
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                );
+              })}
+            </div>
+            {customTypes.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {customTypes.map((t) => (
+                  <span
+                    key={t}
+                    className="inline-flex items-center gap-1 px-3 py-1 text-sm rounded-full bg-purple-100 text-purple-700 border border-purple-200"
+                  >
+                    {t}
+                    <button
+                      type="button"
+                      onClick={() => removeType(t)}
+                      className="hover:text-purple-900"
+                      aria-label={`Bỏ ${t}`}
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2 mt-2">
+              <Input
+                value={customType}
+                onChange={(e) => setCustomType(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addCustomType();
+                  }
+                }}
+                placeholder="Loại khác (vd: Spike)"
+              />
+              <Button type="button" variant="secondary" onClick={addCustomType}>
+                Thêm
+              </Button>
+            </div>
+            <p className="text-xs text-ink-500 mt-2">
+              Để trống = lấy tất cả loại ticket
             </p>
           </div>
           {err && <div className="text-sm text-red-600">{err}</div>}

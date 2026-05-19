@@ -3,6 +3,22 @@ import { connectDB } from "@/lib/mongodb";
 import { Employee } from "@/models/Employee";
 import { encrypt } from "@/lib/crypto";
 import { validateAdoPat, AdoError } from "@/lib/ado";
+import { AdoWorkItemCache } from "@/models/AdoWorkItemCache";
+
+function normalizeTypes(input: unknown): string[] | undefined {
+  if (input === undefined) return undefined;
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const v of input) {
+    const s = String(v ?? "").trim();
+    if (s && !seen.has(s)) {
+      seen.add(s);
+      out.push(s);
+    }
+  }
+  return out;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +38,7 @@ export async function GET(
     project: employee.adoProject,
     email: employee.adoEmail,
     enabled: employee.adoEnabled ?? false,
+    workItemTypes: employee.adoWorkItemTypes ?? [],
   });
 }
 
@@ -32,6 +49,7 @@ export async function POST(
   await connectDB();
   const body = await req.json();
   const { pat, organization, project, email } = body;
+  const workItemTypes = normalizeTypes(body.workItemTypes) ?? [];
 
   console.log('[ADO POST] Received request for employee:', params.id);
   console.log('[ADO POST] Organization:', organization);
@@ -77,7 +95,11 @@ export async function POST(
       adoProject: project || null,
       adoEmail: email,
       adoEnabled: true,
+      adoWorkItemTypes: workItemTypes,
     }, { new: true }); // Return the updated document
+
+    // Invalidate cache when config changes
+    await AdoWorkItemCache.deleteMany({ employeeId: params.id });
 
     console.log('[ADO POST] Update result:', updateResult ? 'Success' : 'Failed');
     console.log('[ADO POST] Updated adoEnabled:', updateResult?.adoEnabled);
@@ -135,8 +157,16 @@ export async function PATCH(
     }
     update.adoEmail = body.email;
   }
+  const typesUpdate = normalizeTypes(body.workItemTypes);
+  if (typesUpdate !== undefined) {
+    update.adoWorkItemTypes = typesUpdate;
+  }
 
   await Employee.findByIdAndUpdate(params.id, update);
+
+  // Invalidate cache when config changes (types may have changed)
+  await AdoWorkItemCache.deleteMany({ employeeId: params.id });
+
   return NextResponse.json({ ok: true });
 }
 
@@ -151,6 +181,8 @@ export async function DELETE(
     adoOrganization: null,
     adoProject: null,
     adoEmail: null,
+    adoWorkItemTypes: [],
   });
+  await AdoWorkItemCache.deleteMany({ employeeId: params.id });
   return NextResponse.json({ ok: true });
 }

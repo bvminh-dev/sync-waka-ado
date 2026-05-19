@@ -17,6 +17,7 @@ export interface IEmployee {
   adoProject?: string | null;
   adoEmail?: string | null;
   adoEnabled?: boolean;
+  adoWorkItemTypes?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -50,6 +51,7 @@ const EmployeeSchema = new Schema<IEmployee>(
     adoProject: { type: String, default: null, trim: true },
     adoEmail: { type: String, default: null, trim: true },
     adoEnabled: { type: Boolean, default: false },
+    adoWorkItemTypes: { type: [String], default: [] },
   },
   { timestamps: true },
 );
