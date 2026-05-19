@@ -6,18 +6,26 @@ import { validateApiKey, WakaTimeError } from "@/lib/wakatime";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
   await connectDB();
-  const list = await Employee.find(
-    {},
-    {
-      name: 1,
-      authType: 1,
-      tokenExpiresAt: 1,
-      accessToken: 1,
-      createdAt: 1,
-    },
-  )
+  const url = new URL(req.url);
+  const adoOnly = url.searchParams.get("ado") === "1";
+  const wakaOnly = url.searchParams.get("waka") === "1";
+
+  const filter: Record<string, unknown> = {};
+  if (adoOnly) filter.adoEnabled = true;
+  if (wakaOnly) filter.authType = { $in: ["api_key", "oauth"] };
+
+  const list = await Employee.find(filter, {
+    name: 1,
+    authType: 1,
+    tokenExpiresAt: 1,
+    accessToken: 1,
+    createdAt: 1,
+    adoEnabled: 1,
+    adoOrganization: 1,
+    adoProject: 1,
+  })
     .sort({ createdAt: -1 })
     .lean();
   const out = list.map((e) => ({
@@ -25,6 +33,9 @@ export async function GET() {
     name: e.name,
     authType: e.authType,
     oauthAuthorized: !!e.accessToken,
+    adoEnabled: !!e.adoEnabled,
+    adoOrganization: e.adoOrganization ?? null,
+    adoProject: e.adoProject ?? null,
     createdAt: e.createdAt,
   }));
   return NextResponse.json({ employees: out });
@@ -34,11 +45,18 @@ export async function POST(req: Request) {
   await connectDB();
   const body = await req.json();
   const { name, authType, apiKey, clientId, clientSecret } = body ?? {};
-  if (!name || !authType)
+  if (!name)
     return NextResponse.json(
-      { error: "name & authType bắt buộc" },
+      { error: "name bắt buộc" },
       { status: 400 },
     );
+
+  // ADO-only employee: tạo nhân viên không có cấu hình waka
+  if (!authType) {
+    const created = await Employee.create({ name });
+    return NextResponse.json({ _id: String(created._id) }, { status: 201 });
+  }
+
   const doc: Record<string, unknown> = { name, authType };
   if (authType === "api_key") {
     if (!apiKey)

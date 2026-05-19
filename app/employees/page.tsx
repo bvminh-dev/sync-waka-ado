@@ -22,7 +22,7 @@ export default function EmployeesPage() {
   const [list, setList] = useState<EmpRow[] | null>(null);
 
   async function load() {
-    const res = await fetch("/api/employees");
+    const res = await fetch("/api/employees?waka=1");
     const d = await res.json();
     setList(d.employees);
   }

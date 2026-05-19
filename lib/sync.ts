@@ -17,6 +17,7 @@ export async function syncEmployeeRange(
   await connectDB();
   const emp = await Employee.findById(employeeId).lean();
   if (!emp) throw new Error("Employee not found");
+  if (!emp.authType) throw new Error("Employee chưa cấu hình WakaTime");
 
   const client = new WakaTimeClient(
     {

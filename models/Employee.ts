@@ -4,7 +4,7 @@ import type { EncString } from "@/lib/crypto";
 export interface IEmployee {
   _id: mongoose.Types.ObjectId;
   name: string;
-  authType: "api_key" | "oauth";
+  authType?: "api_key" | "oauth" | null;
   apiKey?: EncString | null;
   clientId?: EncString | null;
   clientSecret?: EncString | null;
@@ -36,8 +36,8 @@ const EmployeeSchema = new Schema<IEmployee>(
     name: { type: String, required: true, trim: true },
     authType: {
       type: String,
-      enum: ["api_key", "oauth"],
-      required: true,
+      enum: ["api_key", "oauth", null],
+      default: null,
     },
     apiKey: { type: EncStringSchema, default: null },
     clientId: { type: EncStringSchema, default: null },
