@@ -7,12 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmployeeFormDialog } from "@/components/EmployeeForm";
-import { Trash2, ChevronRight } from "lucide-react";
+import { Trash2, ChevronRight, AlertTriangle } from "lucide-react";
 
 interface EmpRow {
   _id: string;
   name: string;
-  authType: "api_key" | "oauth";
+  authType: "api_key" | "oauth" | null;
   oauthAuthorized: boolean;
   createdAt: string;
 }
@@ -22,7 +22,7 @@ export default function EmployeesPage() {
   const [list, setList] = useState<EmpRow[] | null>(null);
 
   async function load() {
-    const res = await fetch("/api/employees?waka=1");
+    const res = await fetch("/api/employees");
     const d = await res.json();
     setList(d.employees);
   }
@@ -73,19 +73,29 @@ export default function EmployeesPage() {
                       {e.name}
                     </h3>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <Badge>
-                        {e.authType === "api_key" ? "API Key" : "OAuth2"}
-                      </Badge>
-                      {e.authType === "oauth" && (
-                        <Badge
-                          className={
-                            e.oauthAuthorized
-                              ? "bg-green-100 text-green-700"
-                              : "bg-amber-100 text-amber-700"
-                          }
-                        >
-                          {e.oauthAuthorized ? "Đã uỷ quyền" : "Chưa uỷ quyền"}
+                      {e.authType === null ? (
+                        <Badge className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 border border-amber-200">
+                          <AlertTriangle size={12} /> Chưa cấu hình WakaTime
                         </Badge>
+                      ) : (
+                        <>
+                          <Badge>
+                            {e.authType === "api_key" ? "API Key" : "OAuth2"}
+                          </Badge>
+                          {e.authType === "oauth" && (
+                            <Badge
+                              className={
+                                e.oauthAuthorized
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-amber-100 text-amber-700"
+                              }
+                            >
+                              {e.oauthAuthorized
+                                ? "Đã uỷ quyền"
+                                : "Chưa uỷ quyền"}
+                            </Badge>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
