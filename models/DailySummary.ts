@@ -3,6 +3,7 @@ import mongoose, { Schema, models, type Model } from "mongoose";
 export interface IBranch {
   name: string;
   totalSeconds: number;
+  adoWorkItemId?: number | null;
 }
 export interface IProject {
   name: string;
@@ -24,6 +25,7 @@ const BranchSchema = new Schema<IBranch>(
   {
     name: { type: String, required: true },
     totalSeconds: { type: Number, required: true, default: 0 },
+    adoWorkItemId: { type: Number, default: null },
   },
   { _id: false },
 );

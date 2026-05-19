@@ -16,6 +16,11 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, RefreshCw, Settings, Loader2, Pause } from "lucide-react";
 
+interface WakaTimeByWorkItem {
+  workItemId: number;
+  totalSeconds: number;
+}
+
 interface WorkItem {
   id: number;
   url: string;
@@ -54,6 +59,7 @@ export default function AdoWorkItemsPage({
   const [stateFilter, setStateFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
+  const [wakaTimeMap, setWakaTimeMap] = useState<Map<number, number>>(new Map());
 
   // Fetch config
   const fetchConfig = useCallback(async () => {
@@ -115,11 +121,29 @@ export default function AdoWorkItemsPage({
     }
   }, [params.id]);
 
+  const fetchWakaTime = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `/api/dashboard/ado?employeeId=${params.id}&preset=month`,
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      const m = new Map<number, number>();
+      for (const wi of data.workItems ?? []) {
+        m.set(wi.workItemId, wi.totalSeconds);
+      }
+      setWakaTimeMap(m);
+    } catch {
+      // non-critical
+    }
+  }, [params.id]);
+
   // Initial load
   useEffect(() => {
     fetchConfig();
     fetchActiveSession();
-  }, [fetchConfig, fetchActiveSession]);
+    fetchWakaTime();
+  }, [fetchConfig, fetchActiveSession, fetchWakaTime]);
 
   // Fetch work items when config or filters change
   useEffect(() => {
@@ -375,6 +399,7 @@ export default function AdoWorkItemsPage({
                   ? new Date(activeSession.startedAt)
                   : null
               }
+              wakaTimeSeconds={wakaTimeMap.get(workItem.id)}
               onStart={() => handleStart(workItem.id)}
               onStop={handleStop}
             />

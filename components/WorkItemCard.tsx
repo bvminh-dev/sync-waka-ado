@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, Pause, ExternalLink } from "lucide-react";
+import { Play, Pause, ExternalLink, Clock } from "lucide-react";
+import { formatHours } from "@/lib/format";
 
 interface WorkItemCardProps {
   workItem: {
@@ -20,6 +21,7 @@ interface WorkItemCardProps {
   };
   isActive: boolean;
   activeSessionStartedAt?: Date | null;
+  wakaTimeSeconds?: number;
   onStart: () => void;
   onStop: () => void;
 }
@@ -57,6 +59,7 @@ export function WorkItemCard({
   workItem,
   isActive,
   activeSessionStartedAt,
+  wakaTimeSeconds,
   onStart,
   onStop,
 }: WorkItemCardProps) {
@@ -99,7 +102,7 @@ export function WorkItemCard({
         {workItem.title}
       </h3>
 
-      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3 mt-auto">
+      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3 mt-auto flex-wrap">
         {workItem.remainingWork !== null && (
           <span>
             Còn lại: <strong>{workItem?.remainingWork?.toFixed(1) || 0}h</strong>
@@ -108,6 +111,12 @@ export function WorkItemCard({
         {workItem.completedWork !== null && (
           <span>
             Đã làm: <strong>{workItem?.completedWork?.toFixed(1) || 0}h</strong>
+          </span>
+        )}
+        {wakaTimeSeconds != null && wakaTimeSeconds > 0 && (
+          <span className="flex items-center gap-1 text-green-700">
+            <Clock size={12} />
+            WakaTime: <strong>{formatHours(wakaTimeSeconds)}</strong>
           </span>
         )}
       </div>

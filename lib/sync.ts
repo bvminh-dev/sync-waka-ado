@@ -3,6 +3,7 @@ import { Employee } from "@/models/Employee";
 import { DailySummary } from "@/models/DailySummary";
 import { WakaTimeClient, type WakaDayRaw } from "./wakatime";
 import { encrypt, type EncString } from "./crypto";
+import { extractAdoWorkItemId } from "./branch-utils";
 
 /**
  * Fetch summaries from WakaTime for the given range and upsert per-day cache.
@@ -55,6 +56,7 @@ export async function syncEmployeeRange(
         const entries: BranchEntry[] = (d.branches ?? []).map((b) => ({
           name: b.name,
           totalSeconds: Math.round(b.total_seconds),
+          adoWorkItemId: extractAdoWorkItemId(b.name),
         }));
         inner.set(d.range.date, entries);
       }
@@ -88,6 +90,7 @@ export async function syncEmployeeRange(
 interface BranchEntry {
   name: string;
   totalSeconds: number;
+  adoWorkItemId: number | null;
 }
 
 interface DailySummaryInsert {

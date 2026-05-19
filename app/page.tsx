@@ -8,6 +8,7 @@ import { RangePicker } from "@/components/RangePicker";
 import { HoursBarChart } from "@/components/HoursBarChart";
 import { formatHours } from "@/lib/format";
 import { ChevronDown, ChevronRight, RefreshCw } from "lucide-react";
+import { WorkItemTimeSummary } from "@/components/WorkItemTimeSummary";
 import type { RangePreset } from "@/lib/ranges";
 
 interface DashData {
@@ -188,6 +189,8 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      <WorkItemTimeSummary preset={preset} />
     </div>
   );
 }
