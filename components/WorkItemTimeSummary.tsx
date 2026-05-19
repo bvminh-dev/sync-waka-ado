@@ -78,7 +78,7 @@ export function WorkItemTimeSummary({ preset }: { preset: RangePreset }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-2xl font-semibold text-primary-dark">
           Thời gian theo Work Item
         </h2>
@@ -86,6 +86,9 @@ export function WorkItemTimeSummary({ preset }: { preset: RangePreset }) {
           <span>{data.workItemCount} tickets</span>
           <span className="font-semibold text-primary">
             {formatHours(data.totalSeconds)}
+          </span>
+          <span className="text-xs text-ink-400">
+            Log giờ → ADO trên trang cá nhân
           </span>
         </div>
       </div>

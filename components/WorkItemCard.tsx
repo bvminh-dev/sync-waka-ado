@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, Pause, ExternalLink, Clock } from "lucide-react";
+import { Play, Pause, ExternalLink, Clock, Upload, Loader2 } from "lucide-react";
 import { formatHours } from "@/lib/format";
 
 interface WorkItemCardProps {
@@ -22,6 +22,8 @@ interface WorkItemCardProps {
   isActive: boolean;
   activeSessionStartedAt?: Date | null;
   wakaTimeSeconds?: number;
+  loggingWork?: boolean;
+  onLogWork?: (workItemId: number, hours: number) => void;
   onStart: () => void;
   onStop: () => void;
 }
@@ -60,6 +62,8 @@ export function WorkItemCard({
   isActive,
   activeSessionStartedAt,
   wakaTimeSeconds,
+  loggingWork,
+  onLogWork,
   onStart,
   onStop,
 }: WorkItemCardProps) {
@@ -117,6 +121,19 @@ export function WorkItemCard({
           <span className="flex items-center gap-1 text-green-700">
             <Clock size={12} />
             WakaTime: <strong>{formatHours(wakaTimeSeconds)}</strong>
+            {onLogWork && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onLogWork(workItem.id, wakaTimeSeconds / 3600);
+                }}
+                disabled={loggingWork}
+                className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 hover:bg-green-200 text-green-800 disabled:opacity-50 transition"
+              >
+                {loggingWork ? <Loader2 size={10} className="animate-spin" /> : <Upload size={10} />}
+                Log ADO
+              </button>
+            )}
           </span>
         )}
       </div>

@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, RefreshCw, Settings, Loader2, Pause } from "lucide-react";
+import { ArrowLeft, RefreshCw, Settings, Loader2, Pause, Upload } from "lucide-react";
 
 interface WakaTimeByWorkItem {
   workItemId: number;
@@ -60,6 +60,8 @@ export default function AdoWorkItemsPage({
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
   const [wakaTimeMap, setWakaTimeMap] = useState<Map<number, number>>(new Map());
+  const [loggingWorkIds, setLoggingWorkIds] = useState<Set<number>>(new Set());
+  const [bulkLogging, setBulkLogging] = useState(false);
 
   // Fetch config
   const fetchConfig = useCallback(async () => {
@@ -193,6 +195,59 @@ export default function AdoWorkItemsPage({
       fetchWorkItems(true);
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : "Lỗi không xác định");
+    }
+  };
+
+  // Log WakaTime hours to ADO (single)
+  const handleLogWork = async (workItemId: number, hours: number) => {
+    setLoggingWorkIds((s) => new Set(s).add(workItemId));
+    try {
+      const res = await fetch(`/api/employees/${params.id}/ado/logwork`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workItemId, hours }),
+      });
+      if (!res.ok) throw new Error("Lỗi log work");
+      fetchWorkItems(true);
+      fetchWakaTime();
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Lỗi không xác định");
+    } finally {
+      setLoggingWorkIds((s) => {
+        const next = new Set(s);
+        next.delete(workItemId);
+        return next;
+      });
+    }
+  };
+
+  // Bulk log all WakaTime hours to ADO
+  const handleBulkLog = async () => {
+    const items: { workItemId: number; hours: number }[] = [];
+    for (const [wiId, seconds] of wakaTimeMap) {
+      if (seconds > 0) items.push({ workItemId: wiId, hours: seconds / 3600 });
+    }
+    if (!items.length) return;
+
+    setBulkLogging(true);
+    try {
+      const res = await fetch(`/api/employees/${params.id}/ado/logwork`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+      if (!res.ok) throw new Error("Lỗi bulk log work");
+      const data = await res.json();
+      const failed = data.results?.filter((r: { success: boolean }) => !r.success) ?? [];
+      if (failed.length) {
+        alert(`${failed.length} work items lỗi khi log`);
+      }
+      fetchWorkItems(true);
+      fetchWakaTime();
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Lỗi không xác định");
+    } finally {
+      setBulkLogging(false);
     }
   };
 
@@ -347,6 +402,24 @@ export default function AdoWorkItemsPage({
           />
           <span className="hidden sm:inline">Làm mới</span>
         </Button>
+
+        {wakaTimeMap.size > 0 && (
+          <Button
+            variant="primary"
+            size="sm"
+            className="h-8"
+            onClick={handleBulkLog}
+            disabled={bulkLogging}
+          >
+            {bulkLogging ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Upload size={14} />
+            )}
+            <span className="hidden sm:inline">Log tất cả → ADO</span>
+            <span className="sm:hidden">Log ADO</span>
+          </Button>
+        )}
       </div>
 
       {/* Active session banner */}
@@ -400,6 +473,8 @@ export default function AdoWorkItemsPage({
                   : null
               }
               wakaTimeSeconds={wakaTimeMap.get(workItem.id)}
+              loggingWork={loggingWorkIds.has(workItem.id)}
+              onLogWork={handleLogWork}
               onStart={() => handleStart(workItem.id)}
               onStop={handleStop}
             />
