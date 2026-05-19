@@ -8,6 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HoursBarChart } from "@/components/HoursBarChart";
 import { UpdateApiKeyDialog } from "@/components/EmployeeForm";
+import {
+  OutlookConfigDialog,
+  OutlookDisconnectButton,
+  type OutlookStatus,
+} from "@/components/OutlookConfigDialog";
 import { formatHours } from "@/lib/format";
 import { todayStr } from "@/lib/ranges";
 import {
@@ -41,6 +46,8 @@ export default function EmployeeDetailPage() {
   const sp = useSearchParams();
   const oauthErr = sp.get("oauth_error");
   const oauthOk = sp.get("oauth");
+  const outlookOk = sp.get("outlook");
+  const outlookErr = sp.get("outlook_error");
   const [emp, setEmp] = useState<EmpDetail | null>(null);
   const [date, setDate] = useState(todayStr());
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -48,6 +55,41 @@ export default function EmployeeDetailPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [outlook, setOutlook] = useState<OutlookStatus | null>(null);
+  const [outlookSyncing, setOutlookSyncing] = useState(false);
+  const [outlookMsg, setOutlookMsg] = useState<string | null>(null);
+
+  const reloadOutlook = () =>
+    fetch(`/api/employees/${params.id}/outlook`)
+      .then((r) => r.json())
+      .then(setOutlook)
+      .catch(() => setOutlook(null));
+
+  useEffect(() => {
+    reloadOutlook();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.id]);
+
+  async function syncOutlookMonth() {
+    setOutlookSyncing(true);
+    setOutlookMsg(null);
+    try {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const res = await fetch(
+        `/api/employees/${params.id}/outlook/sync?start=${start.toISOString()}&end=${end.toISOString()}`,
+        { method: "POST" },
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Sync lỗi");
+      setOutlookMsg(`Đã đồng bộ ${json.count} sự kiện tháng này.`);
+    } catch (e: unknown) {
+      setOutlookMsg(e instanceof Error ? e.message : "Sync lỗi");
+    } finally {
+      setOutlookSyncing(false);
+    }
+  }
 
   const reloadEmp = () =>
     fetch(`/api/employees/${params.id}`)
@@ -162,6 +204,93 @@ export default function EmployeeDetailPage() {
             <div className="mt-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-sm px-3 py-2">
               Lỗi OAuth: {oauthErr}
             </div>
+          )}
+          {outlookOk && (
+            <div className="mt-3 text-sm text-green-700 bg-green-50 border border-green-200 rounded-sm px-3 py-2">
+              Đã kết nối Outlook Calendar thành công.
+            </div>
+          )}
+          {outlookErr && (
+            <div className="mt-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-sm px-3 py-2">
+              Lỗi Outlook: {outlookErr}
+            </div>
+          )}
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Outlook Calendar</CardTitle>
+        </CardHeader>
+        <CardBody>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="text-sm">
+              {outlook?.outlookEnabled ? (
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge>
+                      {outlook.outlookAuthType === "custom"
+                        ? "Custom app"
+                        : "Shared app"}
+                    </Badge>
+                    {outlook.oauthAuthorized ? (
+                      <Badge>Đã uỷ quyền</Badge>
+                    ) : (
+                      <Badge className="bg-yellow-100 text-yellow-800">
+                        Chưa uỷ quyền
+                      </Badge>
+                    )}
+                  </div>
+                  {outlook.outlookEmail && (
+                    <div className="text-ink-500">
+                      Email: <span className="font-mono">{outlook.outlookEmail}</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-ink-500">
+                  Chưa cấu hình Outlook. Bấm &quot;Kết nối Outlook&quot; để bắt đầu.
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <OutlookConfigDialog
+                employeeId={params.id}
+                status={outlook}
+                onSaved={reloadOutlook}
+              />
+              {outlook?.outlookEnabled && (
+                <a
+                  href={`/api/oauth/microsoft/authorize?employeeId=${params.id}`}
+                  className="inline-flex items-center h-9 px-3 text-sm font-bold rounded-md bg-accent text-white hover:bg-accent-hover"
+                >
+                  {outlook.oauthAuthorized ? "Authorize lại" : "Authorize Outlook"}
+                </a>
+              )}
+              {outlook?.outlookEnabled && outlook.oauthAuthorized && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={outlookSyncing}
+                  onClick={syncOutlookMonth}
+                >
+                  <RefreshCw
+                    size={14}
+                    className={outlookSyncing ? "animate-spin" : ""}
+                  />
+                  Sync tháng này
+                </Button>
+              )}
+              {outlook?.outlookEnabled && (
+                <OutlookDisconnectButton
+                  employeeId={params.id}
+                  onDone={reloadOutlook}
+                />
+              )}
+            </div>
+          </div>
+          {outlookMsg && (
+            <div className="mt-3 text-sm text-ink-700">{outlookMsg}</div>
           )}
         </CardBody>
       </Card>

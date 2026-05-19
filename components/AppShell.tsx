@@ -1,7 +1,15 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, Users, LayoutDashboard, Briefcase, Menu, X } from "lucide-react";
+import {
+  Activity,
+  Users,
+  LayoutDashboard,
+  Briefcase,
+  Calendar,
+  Menu,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/format";
 
@@ -9,6 +17,7 @@ const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/employees", label: "WakaTime", icon: Users },
   { href: "/ado", label: "ADO", icon: Briefcase },
+  { href: "/calendar", label: "Calendar", icon: Calendar },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
