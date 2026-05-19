@@ -93,7 +93,7 @@ export async function POST(
           completedWork: currentCompletedWork + elapsedHours,
         };
 
-        if (currentRemainingWork !== null) {
+        if (typeof currentRemainingWork === "number") {
           updateData.remainingWork = Math.max(0, currentRemainingWork - elapsedHours);
         }
 
@@ -196,7 +196,7 @@ export async function PATCH(
       completedWork: currentCompletedWork + elapsedHours,
     };
 
-    if (currentRemainingWork !== null) {
+    if (typeof currentRemainingWork === "number") {
       updateData.remainingWork = Math.max(0, currentRemainingWork - elapsedHours);
     }
 

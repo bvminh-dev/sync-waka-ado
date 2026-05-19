@@ -85,7 +85,7 @@ export function WorkItemCard({
 
   return (
     <Card
-      className={`p-5 hover:shadow-lg transition-shadow ${isActive ? "ring-2 ring-orange-400" : ""}`}
+      className={`p-5 hover:shadow-lg transition-shadow flex flex-col h-full ${isActive ? "ring-2 ring-orange-400" : ""}`}
     >
       <div className="flex items-center gap-2 flex-wrap mb-2">
         <span className="text-sm font-mono text-gray-500">
@@ -99,7 +99,7 @@ export function WorkItemCard({
         {workItem.title}
       </h3>
 
-      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3 mt-auto">
         {workItem.remainingWork !== null && (
           <span>
             Còn lại: <strong>{workItem?.remainingWork?.toFixed(1) || 0}h</strong>
