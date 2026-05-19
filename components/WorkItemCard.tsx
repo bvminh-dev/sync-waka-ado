@@ -5,13 +5,13 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SwipeableActionCard } from "@/components/SwipeableActionCard";
 import { Play, Pause, ExternalLink } from "lucide-react";
 
 interface WorkItemCardProps {
   workItem: {
     id: number;
     url: string;
+    htmlUrl: string;
     title: string;
     state: string;
     type: string;
@@ -24,7 +24,6 @@ interface WorkItemCardProps {
   onStop: () => void;
 }
 
-// State color mapping
 const stateColors: Record<string, string> = {
   New: "bg-gray-100 text-gray-700",
   Active: "bg-blue-100 text-blue-700",
@@ -35,7 +34,6 @@ const stateColors: Record<string, string> = {
   Removed: "bg-red-100 text-red-700",
 };
 
-// Type color mapping
 const typeColors: Record<string, string> = {
   Bug: "bg-red-50 text-red-600 border-red-200",
   Task: "bg-blue-50 text-blue-600 border-blue-200",
@@ -64,7 +62,6 @@ export function WorkItemCard({
 }: WorkItemCardProps) {
   const [elapsedTime, setElapsedTime] = useState<string>("00:00:00");
 
-  // Update timer every second when active
   useEffect(() => {
     if (isActive && activeSessionStartedAt) {
       setElapsedTime(formatElapsedTime(activeSessionStartedAt));
@@ -86,93 +83,77 @@ export function WorkItemCard({
     [workItem.type],
   );
 
-  const actionButton = (
-    <Button
-      variant={isActive ? "danger" : "primary"}
-      size="sm"
-      onClick={isActive ? onStop : onStart}
-      className="shadow-lg"
-    >
-      {isActive ? (
-        <>
-          <Pause size={14} /> Stop
-        </>
-      ) : (
-        <>
-          <Play size={14} /> Start
-        </>
-      )}
-    </Button>
-  );
-
   return (
-    <SwipeableActionCard
-      actionContent={actionButton}
-      actionPosition="left"
-      className={isActive ? "ring-2 ring-orange-400" : ""}
+    <Card
+      className={`p-5 hover:shadow-lg transition-shadow ${isActive ? "ring-2 ring-orange-400" : ""}`}
     >
-      <Card className="p-5 hover:shadow-lg transition-shadow">
-        <div className="flex items-start justify-between gap-3">
-          {/* Left content */}
-          <div className="flex-1 min-w-0">
-            {/* ID and badges */}
-            <div className="flex items-center gap-2 flex-wrap mb-2">
-              <span className="text-sm font-mono text-gray-500">
-                #{workItem.id}
-              </span>
-              <Badge className={typeColor}>{workItem.type}</Badge>
-              <Badge className={stateColor}>{workItem.state}</Badge>
-            </div>
+      <div className="flex items-center gap-2 flex-wrap mb-2">
+        <span className="text-sm font-mono text-gray-500">
+          #{workItem.id}
+        </span>
+        <Badge className={typeColor}>{workItem.type}</Badge>
+        <Badge className={stateColor}>{workItem.state}</Badge>
+      </div>
 
-            {/* Title */}
-            <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
-              {workItem.title}
-            </h3>
+      <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
+        {workItem.title}
+      </h3>
 
-            {/* Work details */}
-            <div className="flex items-center gap-4 text-sm text-gray-600">
-              {workItem.remainingWork !== null && (
-                <span>
-                  Còn lại: <strong>{workItem?.remainingWork?.toFixed(1)||0}h</strong>
-                </span>
-              )}
-              {workItem.completedWork !== null && (
-                <span>
-                  Đã làm: <strong>{workItem?.completedWork?.toFixed(1) || 0}h</strong>
-                </span>
-              )}
-            </div>
+      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+        {workItem.remainingWork !== null && (
+          <span>
+            Còn lại: <strong>{workItem?.remainingWork?.toFixed(1) || 0}h</strong>
+          </span>
+        )}
+        {workItem.completedWork !== null && (
+          <span>
+            Đã làm: <strong>{workItem?.completedWork?.toFixed(1) || 0}h</strong>
+          </span>
+        )}
+      </div>
 
-            {/* Active timer */}
-            {isActive && (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
-                </span>
-                <span className="text-lg font-mono font-semibold text-orange-600">
-                  {elapsedTime}
-                </span>
-              </div>
+      <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-100">
+        {isActive ? (
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="relative flex h-3 w-3 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
+            </span>
+            <span className="text-base font-mono font-semibold text-orange-600 truncate">
+              {elapsedTime}
+            </span>
+          </div>
+        ) : (
+          <span />
+        )}
+
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href={workItem.htmlUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button variant="ghost" size="sm">
+              <ExternalLink size={14} />
+            </Button>
+          </Link>
+          <Button
+            variant={isActive ? "danger" : "primary"}
+            size="sm"
+            onClick={isActive ? onStop : onStart}
+          >
+            {isActive ? (
+              <>
+                <Pause size={14} /> Stop
+              </>
+            ) : (
+              <>
+                <Play size={14} /> Start
+              </>
             )}
-          </div>
-
-          {/* Right action */}
-          <div className="flex flex-col gap-2 items-end">
-            <Link
-              href={workItem.url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button variant="ghost" size="sm">
-                <ExternalLink size={14} />
-              </Button>
-            </Link>
-            {/* Desktop action button */}
-            <div className="hidden md:block">{actionButton}</div>
-          </div>
+          </Button>
         </div>
-      </Card>
-    </SwipeableActionCard>
+      </div>
+    </Card>
   );
 }

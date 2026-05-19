@@ -19,6 +19,7 @@ import { ArrowLeft, RefreshCw, Settings, Loader2, Pause } from "lucide-react";
 interface WorkItem {
   id: number;
   url: string;
+  htmlUrl: string;
   title: string;
   state: string;
   type: string;
@@ -225,28 +226,35 @@ export default function AdoWorkItemsPage({
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <Link
             href={`/employees/${params.id}`}
-            className="text-gray-600 hover:text-gray-900"
+            className="text-gray-600 hover:text-gray-900 shrink-0"
           >
             <Button variant="ghost" size="sm">
-              <ArrowLeft size={16} /> Quay lại
+              <ArrowLeft size={16} />
+              <span className="hidden sm:inline">Quay lại</span>
             </Button>
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Azure DevOps Tickets
+          <h1 className="text-xl sm:text-3xl font-bold text-gray-900 truncate">
+            <span className="sm:hidden">ADO Tickets</span>
+            <span className="hidden sm:inline">Azure DevOps Tickets</span>
           </h1>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Badge className="text-sm border border-line-soft">
-            {config.organization}
-            {config.project && ` / ${config.project}`}
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge className="text-sm border border-line-soft truncate max-w-[60vw]">
+            <span className="sm:hidden">
+              {config.project || config.organization}
+            </span>
+            <span className="hidden sm:inline">
+              {config.organization}
+              {config.project && ` / ${config.project}`}
+            </span>
           </Badge>
           {config.email && (
-            <Badge className="text-sm border border-line-soft bg-blue-50">
+            <Badge className="hidden sm:inline-flex text-sm border border-line-soft bg-blue-50">
               {config.email}
             </Badge>
           )}

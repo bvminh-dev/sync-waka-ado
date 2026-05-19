@@ -33,6 +33,7 @@ export interface AdoWorkItem {
 export interface AdoWorkItemDisplay {
   id: number;
   url: string;
+  htmlUrl: string;
   title: string;
   state: string;
   type: string;
@@ -42,6 +43,17 @@ export interface AdoWorkItemDisplay {
   completedWork: number | null;
   startTime: string | null;
   rev: number;
+}
+
+export function buildAdoHtmlUrl(
+  organization: string,
+  project: string | null | undefined,
+  workItemId: number,
+): string {
+  const base = `https://dev.azure.com/${organization}`;
+  return project
+    ? `${base}/${encodeURIComponent(project)}/_workitems/edit/${workItemId}`
+    : `${base}/_workitems/edit/${workItemId}`;
 }
 
 export interface AdoWiqlResult {
@@ -271,6 +283,7 @@ export class AdoClient {
       `/${project}/_apis/wit/workitems/${workItemId}?api-version=${ADO_API_VERSION}`,
       {
         method: "PATCH",
+        headers: { "Content-Type": "application/json-patch+json" },
         body: JSON.stringify(patchDoc),
       },
     );
@@ -296,6 +309,7 @@ export class AdoClient {
       `/${project}/_apis/wit/workitems/${workItemId}?api-version=${ADO_API_VERSION}`,
       {
         method: "PATCH",
+        headers: { "Content-Type": "application/json-patch+json" },
         body: JSON.stringify(patchDoc),
       },
     );
@@ -358,9 +372,12 @@ export class AdoClient {
    * Convert AdoWorkItem to AdoWorkItemDisplay for UI.
    */
   toDisplay(workItem: AdoWorkItem): AdoWorkItemDisplay {
+    const project =
+      workItem.fields["System.TeamProject"] || this.auth.project || null;
     return {
       id: workItem.id,
       url: workItem.url,
+      htmlUrl: buildAdoHtmlUrl(this.auth.organization, project, workItem.id),
       title: workItem.fields["System.Title"],
       state: workItem.fields["System.State"],
       type: workItem.fields["System.WorkItemType"],

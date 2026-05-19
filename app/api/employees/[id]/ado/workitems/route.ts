@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Employee } from "@/models/Employee";
 import { AdoWorkItemCache } from "@/models/AdoWorkItemCache";
-import { AdoClient, type AdoWorkItemDisplay } from "@/lib/ado";
+import { AdoClient, buildAdoHtmlUrl, type AdoWorkItemDisplay } from "@/lib/ado";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +48,11 @@ export async function GET(
         workItems: filtered.map((c) => ({
           id: c.workItemId,
           url: c.url,
+          htmlUrl: buildAdoHtmlUrl(
+            employee.adoOrganization!,
+            employee.adoProject,
+            c.workItemId,
+          ),
           title: c.title,
           state: c.state,
           type: c.type,

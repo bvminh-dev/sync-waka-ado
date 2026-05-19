@@ -89,10 +89,8 @@ export async function POST(
         const updateData: {
           completedWork: number;
           remainingWork?: number;
-          startTime: null;
         } = {
           completedWork: currentCompletedWork + elapsedHours,
-          startTime: null,
         };
 
         if (currentRemainingWork !== null) {
@@ -109,27 +107,11 @@ export async function POST(
       });
     }
 
-    // Get current work item to set StartTime
-    const workItems = await client.getWorkItems([workItemId]);
-    if (workItems.length === 0) {
-      return NextResponse.json(
-        { error: "Work item not found" },
-        { status: 404 },
-      );
-    }
-
-    const workItem = workItems[0];
-
-    // Set StartTime in ADO
-    const startTime = new Date().toISOString();
-    await client.updateTimeTracking(workItemId, { startTime });
-
-    // Create new session
+    // Create new session — không gọi ADO khi start, chỉ lưu DB
     const newSession = await TimeTrackingSession.create({
       employeeId: params.id,
       adoWorkItemId: workItemId,
       startedAt: new Date(),
-      adoRevision: workItem.rev,
     });
 
     return NextResponse.json({
@@ -138,7 +120,6 @@ export async function POST(
         workItemId: newSession.adoWorkItemId,
         startedAt: newSession.startedAt,
       },
-      workItem: client.toDisplay(workItem),
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Lỗi không xác định";
@@ -151,7 +132,9 @@ export async function PATCH(
   { params }: { params: { id: string } },
 ) {
   await connectDB();
-  const body = await req.json();
+  const body = await req
+    .json()
+    .catch(() => ({} as { completedWork?: number }));
   const { completedWork } = body;
 
   const employee = await Employee.findById(params.id).lean();
@@ -209,10 +192,8 @@ export async function PATCH(
     const updateData: {
       completedWork: number;
       remainingWork?: number;
-      startTime: null;
     } = {
       completedWork: currentCompletedWork + elapsedHours,
-      startTime: null,
     };
 
     if (currentRemainingWork !== null) {

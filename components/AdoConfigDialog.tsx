@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, Unplug } from "lucide-react";
 
 interface AdoConfigDialogProps {
   employeeId: string;
@@ -71,7 +71,10 @@ export function AdoConfigDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="secondary" size="sm">
-          <Plus size={14} /> Cấu hình Azure DevOps
+          <Plus size={14} />
+          <span className="hidden sm:inline">
+            {currentConfig?.enabled ? "Cấu hình" : "Cấu hình Azure DevOps"}
+          </span>
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -182,7 +185,10 @@ export function AdoDisableButton({
 
   return (
     <Button variant="ghost" size="sm" onClick={disable} disabled={busy}>
-      {busy ? "Đang ngắt..." : "Ngắt kết nối ADO"}
+      <Unplug size={14} />
+      <span className="hidden sm:inline">
+        {busy ? "Đang ngắt..." : "Ngắt kết nối ADO"}
+      </span>
     </Button>
   );
 }
